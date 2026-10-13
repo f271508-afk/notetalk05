@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google 試算表筆記備忘錄</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .img-loading {
+            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 via-white to-sky-50 min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-2xl mx-auto space-y-8">
+        
+        <!-- Main Form Card -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            
+            <!-- Header -->
+            <div class="bg-indigo-600 px-6 py-6 text-white text-center relative">
+                <h1 class="text-2xl font-bold tracking-wide">筆記備忘錄</h1>
+                <p class="text-indigo-200 text-sm mt-1">資料自動同步至 Google 試算表與雲端硬碟</p>
+            </div>
+
+            <div class="p-6 sm:p-8 space-y-6">
+                
+                <!-- Apps Script Web App URL Configuration -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 space-y-2">
+                    <p class="font-semibold flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        設定提示：
+                    </p>
+                    <p>請將 Google Apps Script 部署後的 Web App 網址貼入下方欄位（系統會自動記憶）。</p>
+                    <div>
+                        <label for="scriptUrl" class="block font-medium text-amber-900 mb-1">GAS Web App 網址：</label>
+                        <input type="text" id="scriptUrl" oninput="saveScriptUrl(this.value)" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 bg-white border border-amber-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Category & Status selectors -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="noteCategory" class="text-sm font-semibold text-gray-700">筆記分類：</label>
+                                <button onclick="openCategoryModal()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    管理分類
+                                </button>
+                            </div>
+                            <select id="noteCategory" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 bg-white transition text-sm">
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="noteStatus" class="block text-sm font-semibold text-gray-700 mb-1">任務階段：</label>
+                            <select id="noteStatus" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 bg-white transition text-sm">
+                                <option value="待辦">📌 待辦</option>
+                                <option value="進行中">⚡ 進行中</option>
+                                <option value="完成">✅ 完成</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="noteContent" class="block text-sm font-semibold text-gray-700 mb-1">筆記內容：</label>
+                        <textarea id="noteContent" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 placeholder-gray-400 resize-none transition" placeholder="寫下您的隨手靈感或備忘事項..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">上傳照片或檔案：</label>
+                        <div class="flex items-center justify-center w-full">
+                            <label for="fileInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
+                                    <svg class="w-8 h-8 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3-3m3-3v12"></path></svg>
+                                    <p class="text-sm text-gray-600 font-medium" id="fileNameDisplay">點擊或拖曳檔案至此上傳</p>
+                                    <p class="text-xs text-gray-400 mt-1">支援圖片、文件等各式檔案</p>
+                                </div>
+                                <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(this)" />
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="submitNote()" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-indigo-200 transition duration-200 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    儲存至 Google 試算表與雲端硬碟
+                </button>
+
+                <div id="statusBox" class="hidden rounded-xl p-4 text-sm font-medium text-center transition-all"></div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100 space-y-4">
+            <div class="flex flex-col sm:flex-row items-center justify-between border-b pb-4 gap-3">
+                <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    所有筆記紀錄清單
+                </h2>
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                    <select id="filterCategory" onchange="renderHistory()" class="px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </select>
+                    <select id="filterStatus" onchange="renderHistory()" class="px-3 py-1.5 border border-gray-300 rounded-lg text-xs bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="全部">全部狀態</option>
+                        <option value="待辦">📌 待辦</option>
+                        <option value="進行中">⚡ 進行中</option>
+                        <option value="完成">✅ 完成</option>
+                    </select>
+                    <button onclick="fetchAllNotes()" id="refreshBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        同步載入
+                    </button>
+                    <span id="noteCountBadge" class="bg-indigo-100 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-full">0 筆</span>
+                </div>
+            </div>
+            
+            <div id="historyList" class="space-y-3">
+                <div id="emptyHistory" class="text-center py-8 text-gray-400 text-sm">
+                    正在自動載入 Google 試算表資料...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Modal -->
+    <div id="imageLightboxModal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 p-4" onclick="closeLightbox()">
+        <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
+            <button onclick="closeLightbox()" class="absolute -top-12 right-0 text-white hover:text-gray-300 p-2 rounded-full bg-black/50 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <img id="lightboxImg" src="" alt="放大檢視" class="max-w-full max-h-[80vh] rounded-xl shadow-2xl object-contain bg-black/40">
+            <p id="lightboxCaption" class="text-white text-sm mt-3 font-medium bg-black/60 px-4 py-1.5 rounded-full"></p>
+        </div>
+    </div>
+
+    <!-- Category Management Modal -->
+    <div id="categoryModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="text-lg font-bold text-gray-800">管理筆記分類</h3>
+                <button onclick="closeCategoryModal()" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="flex gap-2">
+                <input type="text" id="newCategoryName" placeholder="輸入新分類名稱..." class="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button onclick="addCategory()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">新增分類</button>
+            </div>
+
+            <div id="modalCategoryList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+
+            <div class="flex justify-end pt-2 border-t">
+                <button onclick="closeCategoryModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-5 py-2 rounded-xl transition">完成並關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Alerts -->
+    <div id="customModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center space-y-4">
+            <h4 id="customModalTitle" class="text-lg font-bold text-gray-800">提示</h4>
+            <p id="customModalMessage" class="text-sm text-gray-600"></p>
+            <div id="customModalButtons" class="flex justify-center gap-3 pt-2"></div>
+        </div>
+    </div>
+
+    <script>
+        let allNotes = [];
+        let categories = ['工作', '生活', '靈感', '學習', '其他'];
+        const imageCache = {}; // 快取已載入的 Base64 圖片
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUrl = localStorage.getItem('gas_script_url');
+            if (savedUrl) {
+                document.getElementById('scriptUrl').value = savedUrl;
+                fetchAllNotes(false);
+            } else {
+                document.getElementById('emptyHistory').innerText = '請先於上方填入您的 Google Apps Script 網頁應用程式網址。';
+            }
+
+            const savedCategories = localStorage.getItem('gas_note_categories');
+            if (savedCategories) {
+                try {
+                    categories = JSON.parse(savedCategories);
+                } catch (e) {
+                    console.error('Failed to parse categories', e);
+                }
+            }
+            updateCategoryDropdowns();
+
+            // 事件代理：處理縮圖點擊
+            document.getElementById('historyList').addEventListener('click', function(e) {
+                const thumb = e.target.closest('.note-thumb');
+                if (thumb) {
+                    const fileId = thumb.getAttribute('data-file-id');
+                    const name = thumb.getAttribute('data-file-name');
+                    const cached = imageCache[fileId];
+                    if (cached) {
+                        openLightbox(cached, name);
+                    } else if (fileId) {
+                        loadImageForLightbox(fileId, name);
+                    }
+                }
+            });
+        });
+
+        function saveScriptUrl(url) {
+            localStorage.setItem('gas_script_url', url.trim());
+        }
+
+        function saveCategories() {
+            localStorage.setItem('gas_note_categories', JSON.stringify(categories));
+            updateCategoryDropdowns();
+        }
+
+        function updateCategoryDropdowns() {
+            const select = document.getElementById('noteCategory');
+            const filterSelect = document.getElementById('filterCategory');
+            
+            const currentSelected = select.value;
+            const currentFilter = filterSelect.value || '全部';
+
+            let optionsHtml = '';
+            categories.forEach(cat => {
+                optionsHtml += `<option value="${cat}">${cat}</option>`;
+            });
+            select.innerHTML = optionsHtml;
+            if (categories.includes(currentSelected)) {
+                select.value = currentSelected;
+            }
+
+            let filterHtml = `<option value="全部">全部分類</option>`;
+            categories.forEach(cat => {
+                filterHtml += `<option value="${cat}">${cat}</option>`;
+            });
+            filterSelect.innerHTML = filterHtml;
+            if (currentFilter === '全部' || categories.includes(currentFilter)) {
+                filterSelect.value = currentFilter;
+            } else {
+                filterSelect.value = '全部';
+            }
+        }
+
+        function openCategoryModal() {
+            renderModalCategoryList();
+            document.getElementById('categoryModal').classList.remove('hidden');
+            document.getElementById('categoryModal').classList.add('flex');
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.remove('flex');
+            document.getElementById('categoryModal').classList.add('hidden');
+            renderHistory();
+        }
+
+        function renderModalCategoryList() {
+            const listContainer = document.getElementById('modalCategoryList');
+            if (categories.length === 0) {
+                listContainer.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">尚無分類，請於上方新增。</p>`;
+                return;
+            }
+
+            let html = '';
+            categories.forEach((cat, index) => {
+                html += `
+                    <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                        <span id="cat-text-${index}" class="text-sm font-medium text-gray-800">${cat}</span>
+                        <input type="text" id="cat-input-${index}" value="${cat}" class="hidden px-2 py-1 border rounded-lg text-xs w-32">
+                        <div class="flex items-center gap-1">
+                            <button onclick="moveCategory(${index}, -1)" ${index === 0 ? 'disabled class="opacity-30 cursor-not-allowed text-gray-400 p-1"' : 'class="text-gray-600 hover:text-indigo-600 p-1"'} title="上移">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                            </button>
+                            <button onclick="moveCategory(${index}, 1)" ${index === categories.length - 1 ? 'disabled class="opacity-30 cursor-not-allowed text-gray-400 p-1"' : 'class="text-gray-600 hover:text-indigo-600 p-1"'} title="下移">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <button id="cat-edit-btn-${index}" onclick="enableCategoryEdit(${index})" class="text-indigo-600 hover:text-indigo-800 p-1" title="編輯">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </button>
+                            <button id="cat-save-btn-${index}" onclick="saveCategoryEdit(${index})" class="hidden text-emerald-600 hover:text-emerald-800 p-1" title="儲存">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            </button>
+                            <button onclick="deleteCategory(${index})" class="text-rose-500 hover:text-rose-700 p-1" title="刪除">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+        }
+
+        function addCategory() {
+            const input = document.getElementById('newCategoryName');
+            const val = input.value.trim();
+            if (!val) {
+                showCustomModal('提示', '請輸入分類名稱！');
+                return;
+            }
+            if (categories.includes(val)) {
+                showCustomModal('提示', '此分類名稱已存在！');
+                return;
+            }
+            categories.push(val);
+            input.value = '';
+            saveCategories();
+            renderModalCategoryList();
+        }
+
+        function moveCategory(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= categories.length) return;
+            const temp = categories[index];
+            categories[index] = categories[newIndex];
+            categories[newIndex] = temp;
+            saveCategories();
+            renderModalCategoryList();
+        }
+
+        function enableCategoryEdit(index) {
+            document.getElementById(`cat-text-${index}`).classList.add('hidden');
+            document.getElementById(`cat-input-${index}`).classList.remove('hidden');
+            document.getElementById(`cat-edit-btn-${index}`).classList.add('hidden');
+            document.getElementById(`cat-save-btn-${index}`).classList.remove('hidden');
+        }
+
+        function saveCategoryEdit(index) {
+            const inputVal = document.getElementById(`cat-input-${index}`).value.trim();
+            if (!inputVal) {
+                showCustomModal('提示', '分類名稱不可為空！');
+                return;
+            }
+            if (categories.includes(inputVal) && categories[index] !== inputVal) {
+                showCustomModal('提示', '此分類名稱已存在！');
+                return;
+            }
+            categories[index] = inputVal;
+            saveCategories();
+            renderModalCategoryList();
+        }
+
+        function deleteCategory(index) {
+            if (categories.length <= 1) {
+                showCustomModal('提示', '至少需保留一個分類！');
+                return;
+            }
+            categories.splice(index, 1);
+            saveCategories();
+            renderModalCategoryList();
+        }
+
+        function handleFileSelect(input) {
+            const display = document.getElementById('fileNameDisplay');
+            if (input.files && input.files.length > 0) {
+                display.innerText = `已選擇：${input.files[0].name}`;
+                display.classList.add('text-indigo-600', 'font-bold');
+            } else {
+                display.innerText = '點擊或拖曳檔案至此上傳';
+                display.classList.remove('text-indigo-600', 'font-bold');
+            }
+        }
+
+        // 從 Google Drive 網址提取檔案 ID
+        function getFileId(url) {
+            if (!url || url === '無' || url === '#') return null;
+            const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+            return match ? match[1] : null;
+        }
+
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // 透過 GAS 載入圖片 Base64（給 iPhone Safari 用）
+        async function loadImageBase64(fileId) {
+            if (imageCache[fileId]) return imageCache[fileId];
+            
+            const scriptUrlInput = document.getElementById('scriptUrl').value.trim();
+            if (!scriptUrlInput) return null;
+
+            try {
+                const response = await fetch(scriptUrlInput, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'getImage', fileId: fileId })
+                });
+                const result = await response.json();
+                if (result.status === 'success' && result.base64) {
+                    const dataUrl = `data:${result.mimeType};base64,${result.base64}`;
+                    imageCache[fileId] = dataUrl;
+                    return dataUrl;
+                }
+                return null;
+            } catch (e) {
+                console.warn('載入圖片失敗', fileId, e);
+                return null;
+            }
+        }
+
+        async function loadImageForLightbox(fileId, name) {
+            const statusBox = document.getElementById('statusBox');
+            showStatus('info', '正在載入圖片...');
+            const dataUrl = await loadImageBase64(fileId);
+            if (dataUrl) {
+                openLightbox(dataUrl, name);
+                statusBox.classList.add('hidden');
+            } else {
+                showStatus('error', '圖片載入失敗，請確認雲端硬碟資料夾權限。');
+            }
+        }
+
+        async function submitNote() {
+            const category = document.getElementById('noteCategory').value;
+            const status = document.getElementById('noteStatus').value;
+            const content = document.getElementById('noteContent').value.trim();
+            const fileInput = document.getElementById('fileInput');
+            const scriptUrlInput = document.getElementById('scriptUrl').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!scriptUrlInput) {
+                showStatus('error', '請先填入您的 Google Apps Script 網頁應用程式網址！');
+                return;
+            }
+
+            saveScriptUrl(scriptUrlInput);
+
+            if (!content && fileInput.files.length === 0) {
+                showStatus('error', '請至少輸入筆記內容或選擇一個檔案！');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                資料處理與上傳中...
+            `;
+            showStatus('info', '正在上傳，請稍候...');
+
+            let fileData = null;
+            let fileName = null;
+            let mimeType = null;
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileName = file.name;
+                mimeType = file.type;
+                try {
+                    fileData = await toBase64(file);
+                } catch (error) {
+                    showStatus('error', '檔案讀取失敗，請重新選擇檔案。');
+                    resetButton();
+                    return;
+                }
+            }
+
+            const now = new Date();
+            const timestamp = now.getFullYear() + '-' + 
+                              String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                              String(now.getDate()).padStart(2, '0') + ' ' + 
+                              String(now.getHours()).padStart(2, '0') + ':' + 
+                              String(now.getMinutes()).padStart(2, '0') + ':' + 
+                              String(now.getSeconds()).padStart(2, '0');
+
+            const payload = {
+                action: 'add',
+                timestamp: timestamp,
+                category: category,
+                status: status,
+                content: content,
+                fileName: fileName,
+                mimeType: mimeType,
+                fileData: fileData
+            };
+
+            try {
+                const response = await fetch(scriptUrlInput, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showStatus('success', '筆記與檔案已成功儲存至 Google 試算表與雲端硬碟！');
+                    
+                    document.getElementById('noteContent').value = '';
+                    fileInput.value = '';
+                    document.getElementById('fileNameDisplay').innerText = '點擊或拖曳檔案至此上傳';
+                    document.getElementById('fileNameDisplay').classList.remove('text-indigo-600', 'font-bold');
+
+                    // 清除圖片快取，因為有新資料
+                    Object.keys(imageCache).forEach(k => delete imageCache[k]);
+
+                    fetchAllNotes(false);
+                } else {
+                    throw new Error(result.message || '伺服器回傳錯誤');
+                }
+            } catch (error) {
+                showStatus('error', '儲存失敗：' + error.message);
+            } finally {
+                resetButton();
+            }
+        }
+
+        async function fetchAllNotes(showAlert = true) {
+            const scriptUrlInput = document.getElementById('scriptUrl').value.trim();
+            if (!scriptUrlInput) {
+                if (showAlert) showStatus('error', '請先填入您的 Google Apps Script 網頁應用程式網址！');
+                return;
+            }
+
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (showAlert) {
+                refreshBtn.disabled = true;
+                refreshBtn.innerHTML = `<svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 讀取中...`;
+            }
+
+            try {
+                const response = await fetch(scriptUrlInput, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'getAll' })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    allNotes = result.data || [];
+                    renderHistory();
+                    if (showAlert) showStatus('success', `成功同步載入 ${allNotes.length} 筆紀錄！`);
+                } else {
+                    throw new Error(result.message || '讀取失敗');
+                }
+            } catch (error) {
+                if (showAlert) showStatus('error', '同步失敗：' + error.message);
+                else document.getElementById('historyList').innerHTML = `<div class="text-center py-8 text-rose-500 text-sm">自動載入失敗，請檢查網址或點擊「同步載入」。</div>`;
+            } finally {
+                if (showAlert) {
+                    refreshBtn.disabled = false;
+                    refreshBtn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> 同步載入`;
+                }
+            }
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            const badge = document.getElementById('noteCountBadge');
+            const selectedCategory = document.getElementById('filterCategory').value;
+            const selectedStatus = document.getElementById('filterStatus').value;
+
+            let filteredNotes = allNotes;
+            if (selectedCategory !== '全部') {
+                filteredNotes = filteredNotes.filter(item => item.category === selectedCategory);
+            }
+            if (selectedStatus !== '全部') {
+                filteredNotes = filteredNotes.filter(item => (item.status || '待辦') === selectedStatus);
+            }
+
+            badge.innerText = `${filteredNotes.length} 筆`;
+
+            if (filteredNotes.length === 0) {
+                historyList.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">尚無相關紀錄。您可以點擊「同步載入」從試算表讀取資料。</div>`;
+                return;
+            }
+
+            let html = '';
+            filteredNotes.forEach((item) => {
+                const rowIdx = Number(item.rowIndex);
+                let categoryOptions = '';
+                categories.forEach(cat => {
+                    categoryOptions += `<option value="${cat}" ${item.category === cat ? 'selected' : ''}>${cat}</option>`;
+                });
+
+                const currentStatus = item.status || '待辦';
+                let statusBadgeClass = 'bg-amber-100 text-amber-800';
+                if (currentStatus === '進行中') statusBadgeClass = 'bg-sky-100 text-sky-800';
+                if (currentStatus === '完成') statusBadgeClass = 'bg-emerald-100 text-emerald-800';
+
+                const isImage = item.fileName && (
+                    /\.(png|jpg|jpeg|gif|webp|bmp|heic|heif)$/i.test(item.fileName) || 
+                    (item.mimeType && item.mimeType.startsWith('image/'))
+                );
+
+                const fileId = getFileId(item.fileUrl);
+                const hasImage = isImage && fileId;
+
+                html += `
+                    <div id="note-card-${rowIdx}" class="bg-gray-50 border border-gray-200 rounded-xl p-4 transition hover:shadow-md space-y-3">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">${item.category || '未分類'}</span>
+                                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusBadgeClass}">${currentStatus}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-400">${item.timestamp}</span>
+                                <button type="button" onclick="enableEdit(${rowIdx})" class="text-indigo-600 hover:text-indigo-800 p-1 rounded transition cursor-pointer" title="編輯筆記">
+                                    <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </button>
+                                <button type="button" onclick="confirmDeleteNote(${rowIdx})" class="text-rose-500 hover:text-rose-700 p-1 rounded transition cursor-pointer" title="刪除筆記">
+                                    <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="note-view-mode-${rowIdx}" class="space-y-2">
+                            <p class="text-gray-800 text-sm whitespace-pre-wrap">${item.content || '(無文字內容)'}</p>
+                            ${item.fileName && item.fileName !== '無' ? `
+                                <div class="pt-2 border-t border-gray-200/60 space-y-2">
+                                    ${hasImage ? `
+                                        <div class="flex items-center gap-3">
+                                            <div class="note-thumb group relative w-16 h-16 rounded-lg overflow-hidden border border-gray-300 bg-gray-100 cursor-pointer shadow-sm hover:ring-2 hover:ring-indigo-500 transition flex-shrink-0 img-loading"
+                                                 data-file-id="${fileId}"
+                                                 data-file-name="${(item.fileName || '').replace(/"/g, '&quot;')}">
+                                                <img src="" alt="附件縮圖" style="display:none" class="w-full h-full object-cover group-hover:scale-105 transition duration-200">
+                                                <div class="absolute inset-0 flex items-center justify-center">
+                                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                </div>
+                                            </div>
+                                            <div class="text-xs space-y-1 overflow-hidden">
+                                                <p class="text-gray-600 font-medium truncate">附件：${item.fileName}</p>
+                                                <a href="${item.fileUrl}" target="_blank" class="inline-block text-indigo-600 underline hover:text-indigo-800 font-semibold">在新視窗開啟原圖</a>
+                                            </div>
+                                        </div>
+                                    ` : `
+                                        <div class="flex items-center gap-1.5 text-xs text-indigo-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                            <span class="font-medium truncate max-w-xs">附件：${item.fileName}</span>
+                                            ${item.fileUrl && item.fileUrl !== '無' && item.fileUrl !== '#' ? `<a href="${item.fileUrl}" target="_blank" class="ml-auto underline hover:text-indigo-800 font-semibold">檢視雲端檔案</a>` : ''}
+                                        </div>
+                                    `}
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div id="note-edit-mode-${rowIdx}" class="hidden space-y-3 pt-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">修改分類：</label>
+                                    <select id="edit-category-${rowIdx}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white text-gray-800">
+                                        ${categoryOptions}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">修改階段：</label>
+                                    <select id="edit-status-${rowIdx}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white text-gray-800">
+                                        <option value="待辦" ${currentStatus === '待辦' ? 'selected' : ''}>📌 待辦</option>
+                                        <option value="進行中" ${currentStatus === '進行中' ? 'selected' : ''}>⚡ 進行中</option>
+                                        <option value="完成" ${currentStatus === '完成' ? 'selected' : ''}>✅ 完成</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">修改內容：</label>
+                                <textarea id="edit-content-${rowIdx}" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-800 resize-none">${item.content || ''}</textarea>
+                            </div>
+                            <div class="flex items-center justify-end gap-2">
+                                <button type="button" onclick="cancelEdit(${rowIdx})" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold rounded-lg transition cursor-pointer">取消</button>
+                                <button type="button" onclick="saveEdit(${rowIdx})" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition cursor-pointer">儲存變更</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            historyList.innerHTML = html;
+
+            // 非同步載入所有縮圖的 Base64
+            historyList.querySelectorAll('.note-thumb[data-file-id]').forEach(async (el) => {
+                const fileId = el.getAttribute('data-file-id');
+                const img = el.querySelector('img');
+                if (!fileId || !img) return;
+
+                const dataUrl = await loadImageBase64(fileId);
+                if (dataUrl) {
+                    img.src = dataUrl;
+                    img.style.display = 'block';
+                    el.classList.remove('img-loading');
+                    const placeholder = el.querySelector('.absolute');
+                    if (placeholder) placeholder.style.display = 'none';
+                } else {
+                    el.classList.remove('img-loading');
+                }
+            });
+        }
+
+        function enableEdit(rowIndex) {
+            const viewEl = document.getElementById(`note-view-mode-${rowIndex}`);
+            const editEl = document.getElementById(`note-edit-mode-${rowIndex}`);
+            if (!viewEl || !editEl) {
+                console.warn('找不到對應的編輯區塊，rowIndex =', rowIndex);
+                return;
+            }
+            viewEl.classList.add('hidden');
+            editEl.classList.remove('hidden');
+            editEl.classList.add('block');
+            const textarea = document.getElementById(`edit-content-${rowIndex}`);
+            if (textarea) textarea.focus();
+        }
+
+        function cancelEdit(rowIndex) {
+            const viewEl = document.getElementById(`note-view-mode-${rowIndex}`);
+            const editEl = document.getElementById(`note-edit-mode-${rowIndex}`);
+            if (editEl) {
+                editEl.classList.remove('block');
+                editEl.classList.add('hidden');
+            }
+            if (viewEl) viewEl.classList.remove('hidden');
+        }
+
+        async function saveEdit(rowIndex) {
+            const scriptUrlInput = document.getElementById('scriptUrl').value.trim();
+            const newCategory = document.getElementById(`edit-category-${rowIndex}`).value;
+            const newStatus = document.getElementById(`edit-status-${rowIndex}`).value;
+            const newContent = document.getElementById(`edit-content-${rowIndex}`).value.trim();
+
+            if (!scriptUrlInput) {
+                showStatus('error', '請先填入 GAS 網址');
+                return;
+            }
+
+            showStatus('info', '正在更新筆記...');
+
+            try {
+                const response = await fetch(scriptUrlInput, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify({
+                        action: 'update',
+                        rowIndex: rowIndex,
+                        category: newCategory,
+                        status: newStatus,
+                        content: newContent
+                    })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showStatus('success', '筆記更新成功！');
+                    fetchAllNotes(false);
+                } else {
+                    throw new Error(result.message || '更新失敗');
+                }
+            } catch (error) {
+                showStatus('error', '更新失敗：' + error.message);
+            }
+        }
+
+        function confirmDeleteNote(rowIndex) {
+            showCustomModal('確認刪除', '確定要刪除這筆筆記嗎？此操作無法復原。', [
+                { text: '取消', class: 'bg-gray-100 hover:bg-gray-200 text-gray-700', onclick: 'closeCustomModal()' },
+                { text: '確定刪除', class: 'bg-rose-600 hover:bg-rose-700 text-white', onclick: `deleteNote(${rowIndex})` }
+            ]);
+        }
+
+        async function deleteNote(rowIndex) {
+            const scriptUrlInput = document.getElementById('scriptUrl').value.trim();
+            if (!scriptUrlInput) {
+                showStatus('error', '請先填入 GAS 網址');
+                return;
+            }
+            closeCustomModal();
+            showStatus('info', '正在刪除筆記...');
+            try {
+                const response = await fetch(scriptUrlInput, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'delete', rowIndex: rowIndex })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showStatus('success', '筆記已成功刪除！');
+                    fetchAllNotes(false);
+                } else {
+                    throw new Error(result.message || '刪除失敗');
+                }
+            } catch (error) {
+                showStatus('error', '刪除失敗：' + error.message);
+            }
+        }
+
+        function showStatus(type, message) {
+            const statusBox = document.getElementById('statusBox');
+            statusBox.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200', 'bg-rose-50', 'text-rose-800', 'border-rose-200', 'bg-sky-50', 'text-sky-800', 'border-sky-200');
+            
+            if (type === 'success') {
+                statusBox.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
+            } else if (type === 'error') {
+                statusBox.classList.add('bg-rose-50', 'text-rose-800', 'border', 'border-rose-200');
+            } else {
+                statusBox.classList.add('bg-sky-50', 'text-sky-800', 'border', 'border-sky-200');
+            }
+            statusBox.innerText = message;
+        }
+
+        function showCustomModal(title, message, buttons = null) {
+            document.getElementById('customModalTitle').innerText = title;
+            document.getElementById('customModalMessage').innerText = message;
+            const btnContainer = document.getElementById('customModalButtons');
+            
+            if (buttons) {
+                let html = '';
+                buttons.forEach(b => {
+                    html += `<button onclick="${b.onclick}" class="px-4 py-2 rounded-xl text-xs font-semibold transition ${b.class}">${b.text}</button>`;
+                });
+                btnContainer.innerHTML = html;
+            } else {
+                btnContainer.innerHTML = `<button onclick="closeCustomModal()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition">確定</button>`;
+            }
+
+            document.getElementById('customModal').classList.remove('hidden');
+            document.getElementById('customModal').classList.add('flex');
+        }
+
+        function closeCustomModal() {
+            document.getElementById('customModal').classList.remove('flex');
+            document.getElementById('customModal').classList.add('hidden');
+        }
+
+        function openLightbox(url, caption) {
+            const modal = document.getElementById('imageLightboxModal');
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('lightboxCaption').innerText = caption || '';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('imageLightboxModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            document.getElementById('lightboxImg').src = '';
+        }
+
+        function resetButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                儲存至 Google 試算表與雲端硬碟
+            `;
+        }
+    </script>
+</body>
+</html>
